@@ -1,6 +1,6 @@
 /target
 gl-wrap-core/target
-src/scripts
+src/scripts/*
 # Images
 *.jpg
 *.png
@@ -8,3 +8,6 @@ src/scripts
 # Disposable files, used mostly for testing and refactoring
 *-defunct.rs 
 *-backup.rs
+# Library files
+*.dll
+*.lib
