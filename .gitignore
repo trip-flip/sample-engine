@@ -7,9 +7,6 @@ src/scripts.rs
 # Disposable files, used mostly for testing and refactoring
 *-defunct.rs 
 *-backup.rs
-# Library files
-*.dll
-*.lib
 # Rust 
 /target
 gl-wrap-core/target
