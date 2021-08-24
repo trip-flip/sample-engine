@@ -71,6 +71,10 @@ impl MeshComponent {
         }*/
         self.transforms.push(Transform::new());
     }
+
+    pub fn textures(&self) -> &[Rc<Texture>]{
+        &self.textures
+    }
 }
 
 impl Component for MeshComponent {
@@ -114,14 +118,20 @@ pub struct ScriptComponent<T: Scriptable> {
 
 impl<T: Scriptable> Component for ScriptComponent<T> {
     fn create(entity: &mut Entity) -> Self {
-        ScriptComponent {
+        let mut comp = ScriptComponent {
             script: T::create(),
             entity: entity as *mut _
+        };
+        unsafe {
+            comp.script.on_create(&mut *comp.entity as &mut _);
         }
+        comp
     }
 
     fn update(&mut self) {
-        self.script.on_update(self.entity);
+        unsafe {
+            self.script.on_update(&mut *self.entity as &mut _);
+        }
     }
 }
 
