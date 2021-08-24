@@ -8,7 +8,7 @@ pub mod ecs;
 pub mod scriptable;
 pub mod scripting;
 
-mod instance;
+//mod instance;
 mod types;
 
 use glam::{
