@@ -2,14 +2,15 @@ use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashMap;
 use crate::component::Component;
-use crate::types::{Id, Index};
+use crate::types::Id;
 //use crate::instance::GameInstance;
 
 pub struct ECS {
     /// Lists of all Components that exist in the system.
     components: HashMap<TypeId, Box<dyn Any>>,
-    /// List of all Entities in the system. The index is their
-    /// associated id.
+    /// Hashmap of Ids by Entity name
+    entity_ids: HashMap<String, Id>,
+    /// List of Entities. Index is their Id.
     entities: Vec<Entity>,
     /// List of all updaters of each individual Component.
     updaters: Vec<fn(&mut HashMap<TypeId, Box<dyn Any>>)>,
@@ -21,6 +22,7 @@ impl ECS {
     pub fn new() -> Self {
         ECS {
             components: HashMap::new(),
+            entity_ids: HashMap::new(),
             entities: Vec::new(),
             updaters: Vec::new(),
             //instance: Box::new(GameInstance::new())
@@ -33,7 +35,7 @@ impl ECS {
     /// and if not, then inserts a new Vec of the associated Vec.
     /// Then, it also inserts an updater function for the associated Component,
     /// which is will be run on update.
-    fn add_component<C: Component + 'static>(&mut self, entity: &mut Entity, data_type: TypeId) -> (Index, &mut C) {
+    fn add_component<C: Component + 'static>(&mut self, entity: &mut Entity, data_type: TypeId) -> (Id, &mut C) {
         if !self.components.contains_key(&data_type) {
             self.components.insert(data_type, Box::new(Vec::new() as Vec<C>));
             self.updaters.push(ECS::updater::<C>);
@@ -53,7 +55,7 @@ impl ECS {
     }
 
     /// Helper function for getting a Component.
-    fn get_component<C: Component + 'static>(&mut self, comp_id: TypeId, index: Index) -> Option<&mut C> {
+    fn get_component<C: Component + 'static>(&mut self, comp_id: TypeId, index: Id) -> Option<&mut C> {
         let comps = self.components
             .get_mut(&comp_id)
             .unwrap()
@@ -67,7 +69,8 @@ impl ECS {
     /// Adds a new Entity to the system.
     pub fn new_entity(&mut self, name: &str) -> &mut Entity {
         let id = self.entities.len();
-        let entity = Entity::new(name, id, self as *mut _);
+        let entity = Entity::new(name, self as *mut _);
+        self.entity_ids.insert(name.to_string(), id);
         self.entities.push(entity);
         self.entities.get_mut(id).unwrap()
     }
@@ -95,18 +98,19 @@ impl ECS {
 }
 
 pub struct Entity {
+    /// Name of Entity
     name: String,
-    id: Id, 
-    comp_index: HashMap<TypeId, Index>,
+    /// Hashmap of Ids defined by TypeId
+    comp_index: HashMap<TypeId, Id>,
+    /// Pointer to ECS system
     ecs: *mut ECS,
 }
 
 impl Entity {
     /// Helper function to create a new Entity.
-    fn new(name: &str, id: Id, ecs: *mut ECS) -> Self {
+    fn new(name: &str, ecs: *mut ECS) -> Self {
         Entity {
             name: name.to_string(),
-            id: id,
             comp_index: HashMap::new(),
             ecs: ecs,
         }
@@ -143,15 +147,17 @@ impl Entity {
     /// Delete the Entity.
     pub fn delete(self) {
         unsafe {
-            self.ecs
+            let ecs = self.ecs
                 .as_mut()
-                .unwrap()
-                .entities
-                .remove(self.id);
+                .unwrap();
+            let id = ecs
+                .entity_ids[&self.name];
+
+            ecs.entities.remove(id);
         }
     }
 
-    pub fn scene(&mut self) -> &mut ECS {
+    /*pub fn scene(&mut self) -> &mut ECS {
         unsafe { &mut *self.ecs as &mut _ }
-    }
+    }*/
 }
