@@ -1,4 +1,5 @@
 src/scripts/*
+src/scripts.rs
 # Images
 *.jpg
 *.png
@@ -12,4 +13,3 @@ src/scripts/*
 # Rust 
 /target
 gl-wrap-core/target
-*.lock
