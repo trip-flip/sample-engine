@@ -14,16 +14,18 @@ use gl_wrap_core::{
     component::components::*
 };
 
-mod plane;
-use crate::plane::Plane;
+mod scripts;
+use scripts::plane::Plane;
 
 const WIDTH: u32 = 1366 / 2;
 const HEIGHT: u32 = 768 / 2;
 
+// Mainly just testing code, eventually main should just read files
+// TODO: Read files instead of hard code
 fn main() {
     // ----- Init ----- //
-    /*let context = sdl2::init().unwrap();
-    let _img_context = image::init(image::InitFlag::JPG).unwrap();
+    let context = sdl2::init().unwrap();
+    let _img_context = image::init(image::InitFlag::PNG | image::InitFlag::JPG).unwrap();
     let video = context.video().unwrap();
 
     let gl_attr = video.gl_attr();
@@ -38,11 +40,11 @@ fn main() {
         .unwrap();
 
     let _gl_context = window.gl_create_context().unwrap();
-    gl::load_with(|name| video.gl_get_proc_address(name) as *const std::os::raw::c_void);*/
+    gl::load_with(|name| video.gl_get_proc_address(name) as *const std::os::raw::c_void);
     // ----- !Init ----- //
 
     // ----- Textures ----- //
-    let texture = Rc::new(Texture::new("src/lonely-japanese-cherry.jpg").unwrap());
+    let texture = Rc::new(Texture::new("src/{{{IMAGE HERE}}}").unwrap());
     // ----- !Textures ----- //
     
     // ----- Shader ----- //
@@ -98,25 +100,24 @@ fn main() {
         gl::ClearColor(0.3, 0.2, 0.3, 1.0);
     }
 
-    //let mut events = context.event_pump().unwrap();
-    //let _timer = context.timer().unwrap();
+    let mut events = context.event_pump().unwrap();
+    let _timer = context.timer().unwrap();
 
-    for _ in 0..100 {
-    //'game_loop: loop {
-        /*for event in events.poll_iter() {
+    'game_loop: loop {
+        for event in events.poll_iter() {
             match event {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'game_loop;
                 },
                 _ => {}
             }
-        }*/
+        }
 
         unsafe {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
         ecs.update();
-        //window.gl_swap_window();
+        window.gl_swap_window();
     }
 }
