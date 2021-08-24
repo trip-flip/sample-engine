@@ -3,7 +3,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use crate::component::Component;
 use crate::types::{Id, Index};
-use crate::instance::GameInstance;
+//use crate::instance::GameInstance;
 
 pub struct ECS {
     /// Lists of all Components that exist in the system.
@@ -13,7 +13,7 @@ pub struct ECS {
     entities: Vec<Entity>,
     /// List of all updaters of each individual Component.
     updaters: Vec<fn(&mut HashMap<TypeId, Box<dyn Any>>)>,
-    instance: Box<GameInstance>
+    //instance: Box<GameInstance>
 }
 
 impl ECS {
@@ -23,7 +23,7 @@ impl ECS {
             components: HashMap::new(),
             entities: Vec::new(),
             updaters: Vec::new(),
-            instance: Box::new(GameInstance::new())
+            //instance: Box::new(GameInstance::new())
         }
     }
 
