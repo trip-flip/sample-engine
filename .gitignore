@@ -1,0 +1,10 @@
+/target
+gl-wrap-core/target
+src/scripts
+# Images
+*.jpg
+*.png
+*.gif
+# Disposable files, used mostly for testing and refactoring
+*-defunct.rs 
+*-backup.rs
