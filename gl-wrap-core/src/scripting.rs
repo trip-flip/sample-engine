@@ -1,5 +1,5 @@
 pub use crate::{
-    component::MeshComponent,
+    component::*,
     ecs::Entity,
     scriptable::Scriptable
 };
