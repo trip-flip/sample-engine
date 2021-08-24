@@ -11,7 +11,7 @@ Not exhaustive, subject to change:
     - [x] Mesh
     - [x] Shader
     - [x] Texture
-    - [] Material
+    - [ ] Material
 - [ ] ECS (Entity Component System)
     - [x] Entity
     - [ ] Components
