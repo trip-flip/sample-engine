@@ -7,11 +7,10 @@ edition = "2018"
 
 [dependencies]
 gl = "0.14.0"
-# nalgebra-glm = "*"
 glam = "*"
 itertools = "0.10.1"
 
 [dependencies.sdl2]
 version = "0.34"
 default-features = false
-features = ["image", "gfx"]
+features = ["image"]

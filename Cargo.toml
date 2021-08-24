@@ -8,10 +8,9 @@ edition = "2018"
 [dependencies]
 gl = "0.14.0"
 gl-wrap-core = { path = "gl-wrap-core" }
-nalgebra-glm = "*"
 glam = "*"
 
 [dependencies.sdl2]
 version = "0.34"
 default-features = false
-features = ["image", "gfx"]
+features = ["image"]
