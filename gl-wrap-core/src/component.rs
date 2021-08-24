@@ -60,7 +60,7 @@ impl MeshComponent {
                     mesh: Rc<Mesh>, 
                     shader: Rc<Shader>, 
                     texture: Option<Rc<Texture>>,
-                    material: Option<Material>) {
+                    _material: Option<Material>) {
         self.meshes.push(mesh);
         self.shaders.push(shader);
         if !texture.is_none() {
@@ -90,11 +90,6 @@ impl Component for MeshComponent {
     // TODO: Test for unusual cases where vecs are not the same size
     // TODO: Use textures
     fn update(&mut self) {
-        let draw = self.meshes
-            .iter()
-            .zip(self.shaders.iter())
-            .zip(self.transforms.iter());
-
         let draw = izip!(
             self.meshes.iter(),
             self.textures.iter(),
