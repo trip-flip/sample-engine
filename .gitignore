@@ -11,3 +11,4 @@ src/scripts.rs
 # Rust 
 /target
 gl-wrap-core/target
+Cargo.lock
