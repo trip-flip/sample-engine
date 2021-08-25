@@ -34,7 +34,9 @@ impl Texture {
     // TODO: Introduce support for alpha data.
     /*pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
         let image = Surface::from_file(path)?;
-        let format = match image.pixel_format_enum() {
+        let pf = image.pixel_format_enum();
+        println!("{:?}", pf);
+        let format = match pf {
             PFE::RGB332 |
             PFE::RGB444 |
             PFE::RGB555 => gl::RGB,
@@ -83,6 +85,7 @@ impl Texture {
     /// Creates a new texture from a path. Only supports RGB formats.
     /// NOTE: May fail with images with alpha data (e.g. PNGs)
     // TODO: Introduce support for alpha data.
+    // TODO: Figure a way to avoid copying image data.
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
         let surface = Surface::from_file(&path)?;
         let surface_raw = unsafe {(*surface.raw()).pixels as *const u8};
@@ -91,36 +94,36 @@ impl Texture {
             Ok(image) => {
                image 
             },
-            Err(e) => return Err(format!("{}", e))
+            Err(e) => {
+                return Err(format!("{}", e))
+            }
         };
+
+        // Copies here (BAD!)
         let (width, height, raw, format) = match image {
             DI::ImageRgb8(image) => {
                 let format = gl::RGB;
                 let width = image.width();
                 let height = image.height();
-                let raw = image.as_raw().as_ref() as &[u8];
-                let mut counter = 0;
-                for p in raw {
-                    println!("{}", counter);
-                    unsafe {assert_eq!(*p, *surface_raw.offset(counter));}
-                    counter += 1;
-                }
-                let raw = raw.as_ptr() as *const c_void;
+                let raw = image.into_raw();
                 (width, height, raw, format)
             },
             DI::ImageRgba8(image) => {
                 let format = gl::RGBA;
                 let width = image.width();
                 let height = image.height();
-                let raw = image.as_raw().as_ref() as &[u8];
-                let raw = raw.as_ptr() as *const c_void;
+                let raw = image.into_raw();
+                (width, height, raw, format)
+            },
+            bad_format => {
+                let image = bad_format.into_rgb();
+                let format = gl::RGB;
+                let width = image.width();
+                let height = image.height();
+                let raw = image.into_raw();
                 (width, height, raw, format)
             }
-            bad_format => {
-                panic!("Cannot understand image format {:?}", bad_format);
-            }
         };
-
 
         let mut texture = Texture {
             id: 0,
@@ -136,17 +139,15 @@ impl Texture {
             texture.linear_mipmap_nearest();
             gl::TexImage2D(gl::TEXTURE_2D, 
                            0, 
-                           format as i32, 
+                           format as i32,
                            texture.width as i32, 
                            texture.height as i32, 
                            0, 
                            format,
                            gl::UNSIGNED_BYTE,
-                           raw);
+                           raw.as_ptr() as *const c_void);
             gl::GenerateMipmap(gl::TEXTURE_2D);
-            println!("Test");
         }
-
         Ok(texture)
     }
 
