@@ -4,7 +4,6 @@ use sdl2::{
     keyboard::Keycode,
     event::Event,
     video::GLProfile,
-    image
 };
 use gl_wrap_core::{
     shader::Shader,
@@ -13,6 +12,8 @@ use gl_wrap_core::{
     ecs::{ECS},
     component::components::*
 };
+
+use gltf;
 
 mod scripts;
 use scripts::plane::Plane;
@@ -25,7 +26,6 @@ const HEIGHT: u32 = 768 / 2;
 fn main() {
     // ----- Init ----- //
     let context = sdl2::init().unwrap();
-    let _img_context = image::init(image::InitFlag::PNG | image::InitFlag::JPG).unwrap();
     let video = context.video().unwrap();
 
     let gl_attr = video.gl_attr();
@@ -78,6 +78,7 @@ fn main() {
     // ------ !Data ----- //
 
     // ----- Mesh ----- //
+    add_model("src/boxes.gltf").unwrap();
     let mesh = Rc::new(Mesh::new()
         .vertices(vertices)
         .indices(indices)
@@ -120,4 +121,24 @@ fn main() {
         ecs.update();
         window.gl_swap_window();
     }
+}
+
+pub fn add_model<P: AsRef<std::path::Path>>(path: P) -> Result<(), String> {
+    let gltf = match gltf::Gltf::open(path) {
+        Ok(gltf) => gltf,
+        Err(e) => return Err(format!("{}", e))
+    };
+
+    for scene in gltf.scenes() {
+        for node in scene.nodes() {
+            let mesh = node.mesh().unwrap();
+            println!("#{}", mesh.index());
+            for primitive in mesh.primitives() {
+                println!("- Primative #{}", primitive.index());
+                println!("-- Indice count: {}", primitive.indices().unwrap().count());
+            }
+        }
+    }
+
+    Ok(())
 }
