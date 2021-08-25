@@ -31,60 +31,7 @@ impl Drop for Texture {
 
 impl Texture {
     /// Creates a new texture from a path. Only supports RGB formats.
-    /// NOTE: May fail with images with alpha data (e.g. PNGs)
-    // TODO: Introduce support for alpha data.
-    /*pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
-        let image = Surface::from_file(path)?;
-        let pf = image.pixel_format_enum();
-        println!("{:?}", pf);
-        let format = match pf {
-            PFE::RGB332 |
-            PFE::RGB444 |
-            PFE::RGB555 => gl::RGB,
-
-            PFE::RGBA4444 => gl::RGBA,
-
-            _ => gl::RGB
-        };
-        
-
-        let mut texture = Texture {
-            id: 0,
-            width: image.width(),
-            height: image.height()
-        };
-        unsafe {
-            gl::GenTextures(1, &mut texture.id);
-            gl::BindTexture(gl::TEXTURE_2D, texture.id);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-            texture.linear_mipmap_nearest();
-            /*gl::TexImage2D(gl::TEXTURE_2D, 
-                           0, 
-                           gl::RGB as i32, 
-                           image.width() as i32, 
-                           image.height() as i32, 
-                           0, 
-                           gl::RGB,
-                           gl::UNSIGNED_BYTE,
-                           (*image.raw()).pixels);*/
-            gl::TexImage2D(gl::TEXTURE_2D, 
-                           0, 
-                           format as i32, 
-                           image.width() as i32, 
-                           image.height() as i32, 
-                           0, 
-                           format,
-                           gl::UNSIGNED_BYTE,
-                           (*image.raw()).pixels);
-            gl::GenerateMipmap(gl::TEXTURE_2D);
-        }
-
-        Ok(texture)
-    }*/
-
-    /// Creates a new texture from a path. Only supports RGB formats.
-    /// NOTE: May fail with images with alpha data (e.g. PNGs)
+    /// NOTE: May have unexpected results with alpha data (e.g. PNGS)
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
         let mut image = match open_image(path) {
             Ok(image) => {
@@ -101,18 +48,14 @@ impl Texture {
         let mut to_crop = false;
         if width % 4 != 0 {
             to_crop = true;
-            width = width - 1;
-            while width % 4 != 0 {
-                width = width - 1;
-            }
+            let factor = (width as f32 / 4.0).floor() as u32;
+            width = factor * 4;
         }
 
         if height % 4 != 0 {
             to_crop = true;
-            height = height - 1;
-            while height % 4 != 0 {
-                height = height - 1;
-            }
+            let factor = (height as f32 / 4.0).floor() as u32;
+            height = factor * 4;
         }
 
         if to_crop {
