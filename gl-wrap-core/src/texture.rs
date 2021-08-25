@@ -1,3 +1,5 @@
+use std::path::Path;
+use std::ffi::c_void;
 use gl::{
     self,
     types::{
@@ -6,7 +8,8 @@ use gl::{
 };
 use sdl2::image::LoadSurface;
 use sdl2::surface::Surface;
-use std::path::Path;
+use sdl2::pixels::PixelFormatEnum as PFE;
+use image::{self, DynamicImage as DI};
 
 /// A texture that gets wrapped onto a mesh.
 #[derive(Debug)]
@@ -29,14 +32,102 @@ impl Texture {
     /// Creates a new texture from a path. Only supports RGB formats.
     /// NOTE: May fail with images with alpha data (e.g. PNGs)
     // TODO: Introduce support for alpha data.
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
+    /*pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
         let image = Surface::from_file(path)?;
+        let format = match image.pixel_format_enum() {
+            PFE::RGB332 |
+            PFE::RGB444 |
+            PFE::RGB555 => gl::RGB,
+
+            PFE::RGBA4444 => gl::RGBA,
+
+            _ => gl::RGB
+        };
+        
+
         let mut texture = Texture {
             id: 0,
             width: image.width(),
             height: image.height()
         };
-        
+        unsafe {
+            gl::GenTextures(1, &mut texture.id);
+            gl::BindTexture(gl::TEXTURE_2D, texture.id);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+            texture.linear_mipmap_nearest();
+            /*gl::TexImage2D(gl::TEXTURE_2D, 
+                           0, 
+                           gl::RGB as i32, 
+                           image.width() as i32, 
+                           image.height() as i32, 
+                           0, 
+                           gl::RGB,
+                           gl::UNSIGNED_BYTE,
+                           (*image.raw()).pixels);*/
+            gl::TexImage2D(gl::TEXTURE_2D, 
+                           0, 
+                           format as i32, 
+                           image.width() as i32, 
+                           image.height() as i32, 
+                           0, 
+                           format,
+                           gl::UNSIGNED_BYTE,
+                           (*image.raw()).pixels);
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+        }
+
+        Ok(texture)
+    }*/
+
+    /// Creates a new texture from a path. Only supports RGB formats.
+    /// NOTE: May fail with images with alpha data (e.g. PNGs)
+    // TODO: Introduce support for alpha data.
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
+        let surface = Surface::from_file(&path)?;
+        let surface_raw = unsafe {(*surface.raw()).pixels as *const u8};
+
+        let image = match image::open(path) {
+            Ok(image) => {
+               image 
+            },
+            Err(e) => return Err(format!("{}", e))
+        };
+        let (width, height, raw, format) = match image {
+            DI::ImageRgb8(image) => {
+                let format = gl::RGB;
+                let width = image.width();
+                let height = image.height();
+                let raw = image.as_raw().as_ref() as &[u8];
+                let mut counter = 0;
+                for p in raw {
+                    println!("{}", counter);
+                    unsafe {assert_eq!(*p, *surface_raw.offset(counter));}
+                    counter += 1;
+                }
+                let raw = raw.as_ptr() as *const c_void;
+                (width, height, raw, format)
+            },
+            DI::ImageRgba8(image) => {
+                let format = gl::RGBA;
+                let width = image.width();
+                let height = image.height();
+                let raw = image.as_raw().as_ref() as &[u8];
+                let raw = raw.as_ptr() as *const c_void;
+                (width, height, raw, format)
+            }
+            bad_format => {
+                panic!("Cannot understand image format {:?}", bad_format);
+            }
+        };
+
+
+        let mut texture = Texture {
+            id: 0,
+            width: width,
+            height: height
+        };
+
         unsafe {
             gl::GenTextures(1, &mut texture.id);
             gl::BindTexture(gl::TEXTURE_2D, texture.id);
@@ -45,14 +136,15 @@ impl Texture {
             texture.linear_mipmap_nearest();
             gl::TexImage2D(gl::TEXTURE_2D, 
                            0, 
-                           gl::RGB as i32, 
-                           image.width() as i32, 
-                           image.height() as i32, 
+                           format as i32, 
+                           texture.width as i32, 
+                           texture.height as i32, 
                            0, 
-                           gl::RGB,
+                           format,
                            gl::UNSIGNED_BYTE,
-                           (*image.raw()).pixels);
+                           raw);
             gl::GenerateMipmap(gl::TEXTURE_2D);
+            println!("Test");
         }
 
         Ok(texture)
