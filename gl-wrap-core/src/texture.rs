@@ -6,10 +6,11 @@ use gl::{
         GLuint
     }
 };
-use sdl2::image::LoadSurface;
-use sdl2::surface::Surface;
-use sdl2::pixels::PixelFormatEnum as PFE;
-use image::{self, DynamicImage as DI};
+use image::{open as open_image,
+    DynamicImage as DI, 
+    GenericImageView,
+    ColorType::*
+};
 
 /// A texture that gets wrapped onto a mesh.
 #[derive(Debug)]
@@ -84,13 +85,8 @@ impl Texture {
 
     /// Creates a new texture from a path. Only supports RGB formats.
     /// NOTE: May fail with images with alpha data (e.g. PNGs)
-    // TODO: Introduce support for alpha data.
-    // TODO: Figure a way to avoid copying image data.
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
-        let surface = Surface::from_file(&path)?;
-        let surface_raw = unsafe {(*surface.raw()).pixels as *const u8};
-
-        let image = match image::open(path) {
+        let mut image = match open_image(path) {
             Ok(image) => {
                image 
             },
@@ -99,31 +95,38 @@ impl Texture {
             }
         };
 
-        // Copies here (BAD!)
-        let (width, height, raw, format) = match image {
-            DI::ImageRgb8(image) => {
-                let format = gl::RGB;
-                let width = image.width();
-                let height = image.height();
-                let raw = image.into_raw();
-                (width, height, raw, format)
-            },
-            DI::ImageRgba8(image) => {
-                let format = gl::RGBA;
-                let width = image.width();
-                let height = image.height();
-                let raw = image.into_raw();
-                (width, height, raw, format)
-            },
-            bad_format => {
-                let image = bad_format.into_rgb();
-                let format = gl::RGB;
-                let width = image.width();
-                let height = image.height();
-                let raw = image.into_raw();
-                (width, height, raw, format)
+        // Gather dimensions. Dimensions have to be divisble
+        // by 4, so crop if not.
+        let (mut width, mut height) = image.dimensions();
+        let mut to_crop = false;
+        if width % 4 != 0 {
+            to_crop = true;
+            width = width - 1;
+            while width % 4 != 0 {
+                width = width - 1;
             }
+        }
+
+        if height % 4 != 0 {
+            to_crop = true;
+            height = height - 1;
+            while height % 4 != 0 {
+                height = height - 1;
+            }
+        }
+
+        if to_crop {
+            image = image.crop_imm(0, 0, width, height);
+        }
+
+        let (format, image) = match image.color() {
+            Rgb8 => (gl::RGB, image),
+            Rgba8 => (gl::RGBA, image),
+            L8 => (gl::RGB, DI::ImageRgb8(image.to_rgb8())),
+            La8 => (gl::RGBA, DI::ImageRgba8(image.to_rgba8())),
+            _ => panic!("Bad format")
         };
+        let raw = image.as_bytes();
 
         let mut texture = Texture {
             id: 0,
