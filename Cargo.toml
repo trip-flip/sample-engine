@@ -13,4 +13,7 @@ glam = "*"
 [dependencies.sdl2]
 version = "0.34"
 default-features = false
-features = ["image"]
+
+[dependencies.gltf]
+version = "0.16"
+features = ["extras", "names"]
