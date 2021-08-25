@@ -1,9 +1,11 @@
 src/scripts/*
 src/scripts.rs
-# Images
+# Assets
 *.jpg
 *.png
 *.gif
+*.gltf
+*.glb
 # Disposable files, used mostly for testing and refactoring
 *-defunct.rs 
 *-backup.rs
@@ -11,4 +13,4 @@ src/scripts.rs
 # Rust 
 /target
 gl-wrap-core/target
-Cargo.lock
+gl-wrap-core/Cargo.lock
