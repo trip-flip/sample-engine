@@ -8,20 +8,26 @@ use gl::{
 
 /// Builder for a Mesh
 pub struct MeshBuilder {
-    vertices: Vec<GLfloat>,
-    indices: Vec<GLuint>,
+    name: String,
+    vertices: Vec<u8>,
+    indices: Vec<u8>,
     uv: Vec<GLfloat>,
 }
 
 impl MeshBuilder {
+    pub fn string<S: Into<String>>(mut self, v: S) -> MeshBuilder {
+        self.name = v.into();
+        self
+    }
+
     /// Add vertices to MeshBuilder.
-    pub fn vertices(mut self, v: Vec<GLfloat>) -> MeshBuilder {
+    pub fn vertices(mut self, v: Vec<u8>) -> MeshBuilder {
         self.vertices = v;
         self
     }
 
     /// Add indices to MeshBuilder.
-    pub fn indices(mut self, i: Vec<GLuint>) -> MeshBuilder {
+    pub fn indices(mut self, i: Vec<u8>) -> MeshBuilder {
         self.indices = i;
         self
     }
@@ -45,14 +51,18 @@ impl MeshBuilder {
             return Err(String::from("Error: Did not supply indices"));
         }
 
+        if self.name.is_empty() {
+            return Err(String::from("Error: Did not supply name"));
+        }
+
         let mut mesh = Mesh {
             vao: 0,
             vbo: 0,
             ebo: 0,
             uv: 0,
-            index_count: self.indices.len() as i32,
+            index_count: (self.indices.len() / std::mem::size_of::<u16>()) as _,
         };
-
+        
         unsafe {
             gl::GenVertexArrays(1, &mut mesh.vao);
             gl::BindVertexArray(mesh.vao);
@@ -60,21 +70,24 @@ impl MeshBuilder {
             gl::GenBuffers(1, &mut mesh.vbo);
             gl::BindBuffer(gl::ARRAY_BUFFER, mesh.vbo);
             gl::BufferData(gl::ARRAY_BUFFER, 
-                           (self.vertices.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr,
+                           //(self.vertices.len() /** std::mem::size_of::<f32>()*/) as gl::types::GLsizeiptr,
+                           (self.vertices.len()) as gl::types::GLsizeiptr,
                            self.vertices.as_ptr() as *const _, 
                            gl::STATIC_DRAW);
 
             gl::GenBuffers(1, &mut mesh.ebo);
             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, mesh.ebo);
             gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, 
-                           (self.indices.len() * std::mem::size_of::<u32>()) as gl::types::GLsizeiptr,
+                           //(self.indices.len() * std::mem::size_of::<u16>()) as gl::types::GLsizeiptr,
+                           (self.indices.len()) as gl::types::GLsizeiptr,
                            self.indices.as_ptr() as *const _, 
                            gl::STATIC_DRAW);
 
             gl::VertexAttribPointer(0, 3, 
                                     gl::FLOAT, 
                                     gl::FALSE, 
-                                    (3 * std::mem::size_of::<f32>()) as gl::types::GLint,
+                                    //(3 * std::mem::size_of::<f32>()) as gl::types::GLint,
+                                    0,
                                     std::ptr::null());
             gl::EnableVertexAttribArray(0);
 
@@ -116,6 +129,7 @@ impl Mesh {
     /// Create a builder for the Mesh.
     pub fn new() -> MeshBuilder {
         MeshBuilder {
+            name: String::new(),
             vertices: Vec::new(),
             indices: Vec::new(),
             uv: Vec::new(),
@@ -126,7 +140,8 @@ impl Mesh {
     pub fn draw(&self) {
         unsafe { 
             gl::BindVertexArray(self.vao);
-            gl::DrawElements(gl::TRIANGLES, self.index_count, gl::UNSIGNED_INT, std::ptr::null());
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DrawElements(gl::TRIANGLES, self.index_count, gl::UNSIGNED_SHORT, std::ptr::null());
         }
     }
 

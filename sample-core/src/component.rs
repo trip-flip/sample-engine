@@ -87,20 +87,31 @@ impl Component for MeshComponent {
         }
     }
 
-    // TODO: Test for unusual cases where vecs are not the same size
-    // TODO: Use textures
     fn update(&mut self) {
-        let draw = izip!(
-            self.meshes.iter(),
-            self.textures.iter(),
-            self.shaders.iter(),
-            self.transforms.iter()
-        );
+        if self.textures.is_empty() {
+            let draw = izip!(
+                self.meshes.iter(),
+                self.shaders.iter(),
+                self.transforms.iter(),
+            );
 
-        for (mesh, texture, shader, transform) in draw {
-            shader.set_transform(&transform);
-            texture.enable();
-            mesh.draw();
+            for (mesh, shader, transform) in draw {
+                shader.set_transform(&transform);
+                mesh.draw();
+            }
+        } else {
+            let draw = izip!(
+                self.meshes.iter(),
+                self.textures.iter(),
+                self.shaders.iter(),
+                self.transforms.iter(),
+            );
+
+            for (mesh, texture, shader, transform) in draw {
+                shader.set_transform(&transform);
+                texture.enable();
+                mesh.draw();
+            }
         }
     }
 }

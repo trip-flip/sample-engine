@@ -151,18 +151,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gl-wrap-core"
-version = "0.1.0"
-dependencies = [
- "gl",
- "glam",
- "gltf",
- "image",
- "itertools",
- "sdl2",
-]
-
-[[package]]
 name = "gl_generator"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -442,13 +430,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
 
 [[package]]
+name = "sample-core"
+version = "0.1.0"
+dependencies = [
+ "gl",
+ "glam",
+ "gltf",
+ "image",
+ "itertools",
+ "sdl2",
+]
+
+[[package]]
 name = "sample-engine"
 version = "0.1.0"
 dependencies = [
  "gl",
- "gl-wrap-core",
  "glam",
  "gltf",
+ "sample-core",
  "sdl2",
 ]
 

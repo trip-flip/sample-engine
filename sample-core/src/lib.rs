@@ -7,6 +7,7 @@ pub mod component;
 pub mod ecs;
 pub mod scriptable;
 pub mod scripting;
+pub mod assets;
 
 //mod instance;
 mod types;
