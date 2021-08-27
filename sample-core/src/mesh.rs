@@ -15,7 +15,7 @@ pub struct MeshBuilder {
 }
 
 impl MeshBuilder {
-    pub fn string<S: Into<String>>(mut self, v: S) -> MeshBuilder {
+    pub fn name<S: Into<String>>(mut self, v: S) -> MeshBuilder {
         self.name = v.into();
         self
     }
