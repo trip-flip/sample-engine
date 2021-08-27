@@ -1,13 +1,15 @@
 use std::rc::Rc;
+use std::collections::HashMap;
+use std::path::Path;
 use crate::{
     mesh::Mesh,
     shader::Shader,
     texture::Texture,
 };
 pub struct Assets {
-    meshes: Vec<Rc<Mesh>>,
-    shaders: Vec<Rc<Shader>>,
-    textures: Vec<Rc<Texture>>,
+    meshes: HashMap<String, Rc<Mesh>>,
+    shaders: HashMap<String, Rc<Shader>>,
+    textures: HashMap<String, Rc<Texture>>,
     //materials: Vec<Rc<Material>>,
     //models: Vec<Rc<Model>>
 }
@@ -15,9 +17,17 @@ pub struct Assets {
 impl Assets {
     pub fn new() -> Self {
         Assets {
-            meshes: Vec::new(),
-            shaders: Vec::new(),
-            textures: Vec::new(),
+            meshes: HashMap::new(),
+            shaders: HashMap::new(),
+            textures: HashMap::new(),
         }
+    }
+
+    pub fn import<P: AsRef<Path>>(path: P) {
+        unimplemented!();
+    }
+
+    pub fn get_mesh(&self, name: &str) -> Option<Rc<Mesh>> {
+        unimplemented!();
     }
 }
