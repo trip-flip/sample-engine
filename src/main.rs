@@ -5,7 +5,7 @@ use sdl2::{
     event::Event,
     video::GLProfile,
 };
-use gl_wrap_core::{
+use sample_core::{
     shader::Shader,
     texture::Texture,
     mesh::Mesh,
@@ -44,7 +44,7 @@ fn main() {
     // ----- !Init ----- //
 
     // ----- Textures ----- //
-    let texture = Rc::new(Texture::new("src/{{{IMAGE HERE}}}").unwrap());
+    let texture = Rc::new(Texture::new("src/muscle_girl.png").unwrap());
     // ----- !Textures ----- //
     
     // ----- Shader ----- //
@@ -78,20 +78,20 @@ fn main() {
     // ------ !Data ----- //
 
     // ----- Mesh ----- //
-    add_model("src/boxes.gltf").unwrap();
-    let mesh = Rc::new(Mesh::new()
+    let mesh = add_model("src/boxes.gltf").expect("Model failed");
+    /*let mesh = Rc::new(Mesh::new()
         .vertices(vertices)
         .indices(indices)
         .uv(uv)
         .build()
-        .unwrap());
+        .unwrap());*/
     // ----- !Mesh ----- //
     
     // ----- ECS ----- //
     let mut ecs = ECS::new();
     let entity = ecs.new_entity("Plane");
     entity.add_component::<MeshComponent>(&|comp| {
-        comp.add_mstm(mesh.clone(), shader.clone(), Some(texture.clone()), None);
+        comp.add_mstm(mesh.clone(), shader.clone(), None, None);
     });
     entity.add_component::<ScriptComponent<Plane>>(&|_| {} );
     // ----- !ECS ----- //
@@ -115,7 +115,7 @@ fn main() {
         }
 
         unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
         ecs.update();
@@ -123,22 +123,53 @@ fn main() {
     }
 }
 
-pub fn add_model<P: AsRef<std::path::Path>>(path: P) -> Result<(), String> {
-    let gltf = match gltf::Gltf::open(path) {
-        Ok(gltf) => gltf,
-        Err(e) => return Err(format!("{}", e))
+pub fn add_model<P: AsRef<std::path::Path>>(path: P) -> Result<Rc<Mesh>, String> {
+    let (document, buffers, images) = match gltf::import(path) {
+        Ok(t) => t,
+        Err(e) => return Err(format!("{}", e)) 
     };
 
-    for scene in gltf.scenes() {
-        for node in scene.nodes() {
-            let mesh = node.mesh().unwrap();
-            println!("#{}", mesh.index());
-            for primitive in mesh.primitives() {
-                println!("- Primative #{}", primitive.index());
-                println!("-- Indice count: {}", primitive.indices().unwrap().count());
-            }
-        }
-    }
+    let m = document.meshes().next().unwrap();
+    let p = m.primitives().next().unwrap();
 
-    Ok(())
+    let pos_accessor = p.get(&gltf::Semantic::Positions).unwrap();
+    let pos_view = pos_accessor.view().unwrap();
+    let pos_offset = pos_view.offset();
+    let pos_length = pos_view.length();
+    let pos_buffer = {
+        let index = pos_view.buffer().index();
+        let buffer = &buffers[index];
+        &buffer[pos_offset..pos_offset + pos_length]
+    };
+
+    let ind_accessor = p.indices().unwrap();
+    let ind_view = ind_accessor.view().unwrap();
+    let ind_offset = ind_view.offset();
+    let ind_length = ind_view.length();
+    let ind_buffer = {
+        let index = ind_view.buffer().index();
+        let buffer = &buffers[index];
+        &buffer[ind_offset..ind_offset + ind_length]
+    };
+
+    println!("Index count from buffer reference: {}", ind_buffer.len());
+    print!("Vertices ");
+    let buf_pointer = pos_buffer.as_ptr() as *const f32;
+    for i in (0..10).step_by(3) {
+        unsafe { print!("[ {} {} {} ] ", *(buf_pointer.offset(i)), *(buf_pointer.offset(i + 1)), *(buf_pointer.offset(i + 1))); }
+    }
+    println!("");
+
+    let vertices = pos_buffer.to_vec();
+    let indices = ind_buffer.to_vec();
+
+    let mesh = Rc::new(Mesh::new()
+        .vertices(vertices)
+        .indices(indices)
+        .uv(Vec::new())
+        .build()
+        .unwrap()
+    );
+
+    return Ok(mesh);
 }
