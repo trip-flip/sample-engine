@@ -14,3 +14,5 @@ src/scripts.rs
 /target
 gl-wrap-core/target
 gl-wrap-core/Cargo.lock
+# Editor
+*.code-workspace
