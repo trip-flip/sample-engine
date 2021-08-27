@@ -132,6 +132,8 @@ pub fn add_model<P: AsRef<std::path::Path>>(path: P) -> Result<Rc<Mesh>, String>
     let m = document.meshes().next().unwrap();
     let p = m.primitives().next().unwrap();
 
+    let mesh_name = m.name().unwrap();
+
     let pos_accessor = p.get(&gltf::Semantic::Positions).unwrap();
     let pos_view = pos_accessor.view().unwrap();
     let pos_offset = pos_view.offset();
@@ -167,6 +169,7 @@ pub fn add_model<P: AsRef<std::path::Path>>(path: P) -> Result<Rc<Mesh>, String>
         .vertices(vertices)
         .indices(indices)
         .uv(Vec::new())
+        .name(mesh_name)
         .build()
         .unwrap()
     );
