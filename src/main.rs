@@ -44,7 +44,7 @@ fn main() {
     // ----- !Init ----- //
 
     // ----- Textures ----- //
-    let texture = Rc::new(Texture::new("src/muscle_girl.png").unwrap());
+    //let texture = Rc::new(Texture::new("src/{{{IMAGE HERE}}}.png").unwrap());
     // ----- !Textures ----- //
     
     // ----- Shader ----- //
